@@ -22,4 +22,11 @@ type User struct{
   Email string
   Accountnummer int
 }
+```
 
+Structs werden dann wie folgt entweder in Reihenfolge oder mit Feldreferenz iniziiert:
+
+```go
+var user1 User = User{"Max Mustermann", "maxmuster@mann.de",1}
+var user2 User = User{Name: "Erika Mustermann", Email: "erikamuster@mann.de", Accountnummer: 2}
+```
