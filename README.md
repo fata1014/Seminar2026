@@ -30,3 +30,10 @@ Structs werden dann wie folgt entweder in Reihenfolge oder mit Feldreferenz iniz
 var user1 User = User{"Max Mustermann", "maxmuster@mann.de",1}
 var user2 User = User{Name: "Erika Mustermann", Email: "erikamuster@mann.de", Accountnummer: 2}
 ```
+
+Zugriff auf die Felder eines Structs werden mit dem Punktopertor `.` durchgeführt:
+
+```go
+var user1_Name string = user1.Name
+```
+
