@@ -14,4 +14,12 @@ Dazu wird zunächst der konzeptuelle Unterschied zwischen Funktionen und Methode
 Um den vollen Umfang der Limitierung des Nutzens von Generics in Go zu verstehen, werden wir uns zuerst grundlegende Bestandteile von Go genauer angucken und verstehen
 
 ### Structs
+Ein Struct ist eine Datenstruktur um eine Sammlung von zusammengehöriger Daten zu bündeln. Ein Struct besteht aus benannten Feldern mit einem explizieten Datentyp. Hat man schon einmal eine objekt-orientierte Programmiersprache wie Java/C++ verwendet, kann man sich ein Struct als Klasse ohne Vererbung vorstellen. 
+
+```go
+type User struct{
+  Name string
+  Email string
+  Accountnummer int
+}
 
