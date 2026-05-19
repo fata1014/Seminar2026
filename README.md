@@ -27,7 +27,7 @@ type User struct{
 Structs werden dann wie folgt entweder in Reihenfolge oder mit Feldreferenz iniziiert:
 
 ```go
-var user1 User = User{"Max Mustermann", "maxmuster@mann.de",1}
+var user1 User = User{"Max Mustermann", "maxmuster@mann.de", 1}
 var user2 User = User{Name: "Erika Mustermann", Email: "erikamuster@mann.de", Accountnummer: 2}
 ```
 
@@ -35,5 +35,34 @@ Zugriff auf die Felder eines Structs werden mit dem Punktopertor `.` durchgefüh
 
 ```go
 var user1_Name string = user1.Name
+```
+
+### Methoden
+
+Methoden in Go sind ganz normale Funktionen mit:
+`Methodenname`,
+`Parameterliste` und 
+`Rückgabewert`.
+
+Der entscheidende Unterschied zu normalen Funktionen ist der sogenannte Receiver. Der `Receiver` ist ein zusätzlicher Parameter vor dem Methodennamen, der angibt an welchen Typ die Methode gebunden wird. Wer die Klassen-Analogie von vorhin im Kopf hat, wird bemerkt haben dass im Struct die Methodendefinitionen fehlen. Das ist kein Zufall! In Go werden Methoden bewusst außerhalb des Structs definiert und erst durch den Receiver an einen Typ gebunden.
+
+```go
+//Normale Funktion
+func WerBinIch(u User) string{
+  return "Mein Name ist " + u.Name
+}
+
+//User wird als Parameter übergeben
+WerBinIch(user1)
+--> Mein Name ist Max Mustermann
+
+//Methode mit Typ "User" als Receiver
+func (u User) werBinIch() string{
+  return "Mein Name ist " + u.Name
+}
+
+//Methode ist jetzt an den Typ "User" gebunden und kann mit dem Punktoperator benutzt werden
+user1.werBinIch()
+--> Mein Name ist Max Mustermann
 ```
 
