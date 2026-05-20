@@ -210,7 +210,37 @@ func (p Pipeline) Map(fn func(any) any) Pipeline {
 In dieser Variante verliert man zwar die Typsicherheit aber erhält die Möglichkeit die Methodenaufrufe zu verketten, wie in der ursprünglichen Version angedacht. Die Möglichkeit der Verkettung erkauft man sich mit der Möglichkeit einer Panic während der Laufzeit wenn der Cast des Rückgabewerts fehlschlägt.
 
 ```Go
-result := Pipeline.
+result := pipeline.
     Map(func(v any) any { return v.(User).Name }).
     Map(func(v any) any { return v.(string).EncodeBase64() }) // panics at runtime if wrong
+```
+> [!TIP]
+> - Verkettung funktioniert von links nach rechts
+> - Funktion erfüllt: Type A in Type B überführen
+> - Kein zusätzlicher Boilerplate-Code nötig
+
+> [!WARNING]
+> - Keine Typsicherheit
+> - Panics zur Laufzeit möglich
+
+### 3) Wrapper Types 
+
+Wenn man verkettete Aufrufe erst nach dem Mapping machen möchte und zusätzlich es nicht viele Mapping-Schritte gibt ist diese Variante eventuell geeignet. Man führt für jeden Mapping-Schritt einen eigenen Wrapper-Type ein, welcher beide Types A und B, sowie die vorherige Pipeline beinhaltet. Der zusätzliche Aufwand und Boilerplate-Code wächst enorm bei mehreren Mapping-Schritte, jedoch bietet er komplette Typsicherheit und erlaubt zumindest verkettete Aufrufe nach dem Mapping.
+
+```Go
+type Pipeline[A any]  struct { items []A }
+type Mapped[A, B any] struct { items []B; src Pipeline[A] }
+
+func Map[A, B any](p Pipeline[A], fn func(A) B) Mapped[A, B] {
+    out := make([]B, len(p.items))
+    for i, v := range p.items { out[i] = fn(v) }
+    return Mapped[A, B]{out, p}
+}
+
+// Mapped hat noch andere Methoden: Filter, Reduce, etc.
+func (m Mapped[A, B]) Filter(fn func(A) bool) Mapped[A, B] { ... }
+
+// Typsicher aber für jede Transformation ein neuen Type
+mapped := Map(pipeline, fnUserToString)   // Mapped[User, string]
+result := mapped.Filter(nonEmpty) // Mapped[User, string]
 ```
