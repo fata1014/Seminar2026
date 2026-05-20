@@ -121,3 +121,4 @@ user2:= User{"Erika Mustermann", "erikamuster@mann.de", 2}
 
 pipeline := Pipeline[User]{items: []User{user1, user2}}
 ```
+Jetzt benötigen wir noch eine Methode für die Pipeline um die Transformation durchzuführen. Wie oben beschrieben soll diese Methode es ermöglichen einen beliebigen Type in einen beliebigen Ziel-Type zu transformieren. 
