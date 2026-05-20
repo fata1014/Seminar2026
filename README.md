@@ -121,4 +121,36 @@ user2:= User{"Erika Mustermann", "erikamuster@mann.de", 2}
 
 pipeline := Pipeline[User]{items: []User{user1, user2}}
 ```
-Jetzt benötigen wir noch eine Methode für die Pipeline um die Transformation durchzuführen. Wie oben beschrieben soll diese Methode es ermöglichen einen beliebigen Type in einen beliebigen Ziel-Type zu transformieren. 
+Jetzt benötigen wir noch eine Mapping Methode für die Pipeline um die Transformation durchzuführen. Wie oben beschrieben soll diese Methode es ermöglichen einen beliebigen Type in einen beliebigen Ziel-Type zu transformieren. 
+Also benötigen wir die `Pipeline als Receiver`, weil sie die Items des Types A beinhaltet. Desweiteren müssen wir einen neuen Typparameter vorstellen für den Ziel-Type B. 
+
+```Go
+func (p Pipeline[A]) Map[B] (fn func(A) B) Pipeline[U] {            
+    out := make([]B, len(p.items))
+    for i, v := range p.items {
+        out[i] = fn(v)
+    }
+    return Pipeline[B]{out}
+}
+```
+
+Da die Mapping Methode für jeden Type sowie auch Ziel-Type funktionieren soll, muss der Mapping Methode als Parameter eine Funktion mitgegeben werden, welche die Logik der Transformation beinhaltet. Für diesen Fall, Users in Strings zu transformieren, würde die Function so aussehen:
+
+```Go
+fnUserToString:= func(u User) string { return u.Name }
+```
+Jetzt haben wir alles um jeden beliebigen Type in einen anderen zu transformieren. Auch sind jetzt sehr gut lesbare Verkettungen möglich. Erweitern wir den Code um eine Funktion, welche die Logik zum Encoden eines Strings in Base64 ermöglicht, dann könnte man dies so umsetzten:
+
+```Go
+fnEncodeBase64:= func(uname string) string {...}
+
+result:= pipeline.Map(fnUserToString).Map(fnEncodeBase64)
+```
+Nun können wir es versuchen einmal auszuführen:
+```diff
+- syntax error: method must have no type parameters
+```
+
+Zwar unterstützt Go die Verwendung von Generics, aber nur mit Einschränkungen. Unser Code konnte nicht compiliert werden, weil: Go erlaubt nicht das Vorstellen neuer Typparameter bei Methoden und damit unterstützt Go keine generischen Methoden! Die Methodensignatur unserer `Map` Methode ist unzulässig, weil wir versucht haben nach dem Methodennamen einen neuen Typparameter vorzustellen: `... Map[B]`. 
+
+Dass Go keine generischen Methoden unterstützt bedeutet allerdings nicht dass wir unser Problem nicht lösen können. Es gibt verschiedene Anstätze wie man diese Einschränkung umgehen kann, jede von diesen haben ihre Vor- und Nachteile welche im nachfolgenden Abschnitt vorgestellt werden.
