@@ -191,4 +191,26 @@ result := Map(Map(pipeline, fnUserToString), fnEncodeBase64)
 
 ### 2) Methode ohne Typeparameter
 
-Eine andere Möglichkeit ist 
+Eine andere Möglichkeit die Typeparamter aus der Methodensignatur komplett zu entfernen. Dafür ist es notwendig, dass die Pipeline in dessen `item[]` Feld `any`, also egal welchen Type speichern kann und der Typparameter entfernt wird. Dadurch ist es nicht mehr nötig die `Map` Methode mit dem Typparameter `B` zu versehen, da jetzt als Rückgabewert `[]any` verwendet werden kann. Dadurch muss aber jetzt der Caller der Funktion abschließend den Rückgabewert in den Ziel-Type casten. Dies hat den Nachteil, dass keine Typsicherheit mehr garantiert ist und es zu Panics zur Laufzeit kommen kann, wenn nicht der richtige Type zurückgeliefert wird.
+
+```Go
+type Pipeline struct { // keine typparameter mehr!
+    items []any
+}
+
+// hier auf keine typparameter mehr!
+func (p Pipeline) Map(fn func(any) any) Pipeline {
+    out := make([]any, len(p.items))
+    for i, v := range p.items {
+        out[i] = fn(v)
+    }
+    return Pipeline{out}
+}
+```
+In dieser Variante verliert man zwar die Typsicherheit aber erhält die Möglichkeit die Methodenaufrufe zu verketten, wie in der ursprünglichen Version angedacht. Die Möglichkeit der Verkettung erkauft man sich mit der Möglichkeit einer Panic während der Laufzeit wenn der Cast des Rückgabewerts fehlschlägt.
+
+```Go
+result := Pipeline.
+    Map(func(v any) any { return v.(User).Name }).
+    Map(func(v any) any { return v.(string).EncodeBase64() }) // panics at runtime if wrong
+```
