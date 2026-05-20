@@ -158,7 +158,7 @@ Dass Go keine generischen Methoden unterstützt bedeutet allerdings nicht, dass 
 
 ### 1) Map als generische Funktion anstatt als generische Methode
 
-Wenn wir die Pipeline nicht mehr als Receiver verwendet, sondern als Argumentübergibt, kann man A sowie auch B in der Parameterliste der Funktion deklarieren. Beachte dass neue Typparameter nur bei Methoden nicht zulässig sind! Da Pipeline nicht mehr der Receiver ist, gibt es auch keine Methode mehr, sondern "nur noch" eine Funktion und ist damit zulässig. 
+Wenn die Pipeline nicht mehr als Receiver verwendet, sondern als Argument übergeben wird, kann man A sowie auch B in der Parameterliste der Funktion deklarieren (Beachte dass neue Typparameter nur bei Methoden nicht zulässig sind!). Da Pipeline nicht mehr der Receiver ist, gibt es auch keine Methode mehr, sondern "nur noch" eine Funktion und ist damit zulässig.
 
 ```Go
 func Map[A, B any](p  Pipeline[A], fn func(A) B) Pipeline[U] {
@@ -169,7 +169,7 @@ func Map[A, B any](p  Pipeline[A], fn func(A) B) Pipeline[U] {
     return Pipeline[B]{out}
 }
 ```
-Diese Funktion ermöglicht es uns einen beliebigen Type A zu einem beliebigen Type B umzuwandeln und dabei auch für Typsicherheit garantieren. Leider geht dadurch aber auch die Möglichkeit der Verkettung verloren. Vorher konnten wir die Pipeline im Methodenaufruf elegant von links nach rechts darstellen, jetzt muss entweder jeder Transformationsschritt einzeln durchgeführt werden oder wenn man versucht die Aufrufe zu verschachteln muss man den Aufruf von innen nach außen lesen.
+Diese Funktion ermöglicht es uns einen beliebigen Type A zu einem beliebigen Type B umzuwandeln und dabei auch Typsicherheit zu garantieren. Leider geht dadurch aber auch die Möglichkeit der Verkettung verloren. Vorher konnten wir die Pipeline im Methodenaufruf elegant von links nach rechts darstellen, jetzt muss entweder jeder Transformationsschritt einzeln durchgeführt werden oder wenn man versucht die Aufrufe zu verschachteln, muss man den Aufruf von innen nach außen lesen.
 
 ```Go
 // Jeder Schritt einzeln ausführen
@@ -191,7 +191,7 @@ result := Map(Map(pipeline, fnUserToString), fnEncodeBase64)
 
 ### 2) Methode ohne Typeparameter
 
-Eine andere Möglichkeit die Typeparamter aus der Methodensignatur komplett zu entfernen. Dafür ist es notwendig, dass die Pipeline in dessen `item[]` Feld `any`, also egal welchen Type speichern kann und der Typparameter entfernt wird. Dadurch ist es nicht mehr nötig die `Map` Methode mit dem Typparameter `B` zu versehen, da jetzt als Rückgabewert `[]any` verwendet werden kann. Dadurch muss aber jetzt der Caller der Funktion abschließend den Rückgabewert in den Ziel-Type casten. Dies hat den Nachteil, dass keine Typsicherheit mehr garantiert ist und es zu Panics zur Laufzeit kommen kann, wenn nicht der richtige Type zurückgeliefert wird.
+Eine andere Möglichkeit besteht darin, die Typparameter aus der Methodensignatur komplett zu entfernen. Dafür ist es notwendig, dass die Pipeline in ihrem `items[]` Feld `any`, also egal welchen Type speichern kann und der Typparameter entfernt wird. Dadurch ist es nicht mehr nötig die Map Methode mit dem Typparameter B zu versehen, da jetzt als Rückgabewert `[]any` verwendet werden kann. Dadurch muss aber jetzt der Caller der Funktion abschließend den Rückgabewert in den Ziel-Type casten. Dies hat den Nachteil, dass keine Typsicherheit mehr garantiert ist und es zu Panics zur Laufzeit kommen kann, wenn zur Laufzeit ein falscher Type gecastet wird.
 
 ```Go
 type Pipeline struct { // keine typparameter mehr!
@@ -207,7 +207,7 @@ func (p Pipeline) Map(fn func(any) any) Pipeline {
     return Pipeline{out}
 }
 ```
-In dieser Variante verliert man zwar die Typsicherheit aber erhält die Möglichkeit die Methodenaufrufe zu verketten, wie in der ursprünglichen Version angedacht. Die Möglichkeit der Verkettung erkauft man sich mit der Möglichkeit einer Panic während der Laufzeit wenn der Cast des Rückgabewerts fehlschlägt.
+In dieser Variante verliert man zwar die Typsicherheit, erhält aber die Möglichkeit die Methodenaufrufe zu verketten, wie in der ursprünglichen Version angedacht. Die Verkettung erkauft man sich mit dem Verlust der Typsicherheit und der Möglichkeit von Panics zur Laufzeit.
 
 ```Go
 result := pipeline.
@@ -225,8 +225,7 @@ result := pipeline.
 
 ### 3) Wrapper Types 
 
-Wenn man verkettete Aufrufe erst nach dem Mapping machen möchte und zusätzlich es nicht viele Mapping-Schritte gibt ist diese Variante eventuell geeignet. Man führt für jeden Mapping-Schritt einen eigenen Wrapper-Type ein, welcher beide Types A und B, sowie die vorherige Pipeline beinhaltet. Der zusätzliche Aufwand und Boilerplate-Code wächst enorm bei mehreren Mapping-Schritte, jedoch bietet er komplette Typsicherheit und erlaubt zumindest verkettete Aufrufe nach dem Mapping.
-
+Wenn man verkettete Aufrufe erst nach dem Mapping verwenden möchte und es zusätzlich nicht viele Mapping-Schritte gibt, ist diese Variante eventuell geeignet. Man führt für jeden Mapping-Schritt einen eigenen Wrapper-Type ein, welcher beide Types A und B sowie die vorherige Pipeline beinhaltet. Der zusätzliche Aufwand und Boilerplate-Code wächst enorm bei mehreren Mapping-Schritten, jedoch bietet er komplette Typsicherheit und erlaubt zumindest verkettete Aufrufe nach dem Mapping.
 ```Go
 type Pipeline[A any]  struct { items []A }
 type Mapped[A, B any] struct { items []B; src Pipeline[A] }
@@ -238,11 +237,12 @@ func Map[A, B any](p Pipeline[A], fn func(A) B) Mapped[A, B] {
 }
 
 // Mapped hat noch andere Methoden: Filter, Reduce, etc.
-func (m Mapped[A, B]) Filter(fn func(A) bool) Mapped[A, B] { ... }
+// Filter operiert auf dem gemappten Type B, nicht auf dem ursprünglichen Type A
+func (m Mapped[A, B]) Filter(fn func(B) bool) Mapped[A, B] { ... }
 
-// Typsicher aber für jede Transformation ein neuen Type
-mapped := Map(pipeline, fnUserToString)   // Mapped[User, string]
-result := mapped.Filter(nonEmpty) // Mapped[User, string]
+// Typsicher aber für jede Transformation ein neuer Type
+mapped := Map(pipeline, fnUserToString)  // Mapped[User, string]
+result := mapped.Filter(func(name string) bool { return name != "" })
 ```
 > [!TIP]
 > - Verkettung funktioniert sobald Mapping abgeschlossen
