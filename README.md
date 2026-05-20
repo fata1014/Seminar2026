@@ -244,3 +244,10 @@ func (m Mapped[A, B]) Filter(fn func(A) bool) Mapped[A, B] { ... }
 mapped := Map(pipeline, fnUserToString)   // Mapped[User, string]
 result := mapped.Filter(nonEmpty) // Mapped[User, string]
 ```
+> [!TIP]
+> - Verkettung funktioniert sobald Mapping abgeschlossen
+> - Typsicherheit
+
+> [!WARNING]
+> - Neuer Type für jeden Mapping-Schritt
+> - Kann extremen Aufwand verursachen
