@@ -152,3 +152,43 @@ Nun können wir es versuchen einmal auszuführen:
 
 Zwar unterstützt Go die Verwendung von Generics, aber nur mit Einschränkungen. Unser Code konnte nicht compiliert werden, weil Go es nicht erlaubt, neue Typparameter bei Methoden einzuführen – Go unterstützt also keine generischen Methoden. Die Methodensignatur unserer `Map` Methode ist unzulässig, weil wir versucht haben nach dem Methodennamen einen neuen Typparameter einzuführen: `... Map[B]`.
 Dass Go keine generischen Methoden unterstützt bedeutet allerdings nicht, dass wir unser Problem nicht lösen können. Es gibt verschiedene Ansätze wie man diese Einschränkung umgehen kann, jeder dieser Ansätze hat seine Vor- und Nachteile, welche im nachfolgenden Abschnitt vorgestellt werden.
+
+
+## Workarounds
+
+### 1) Map als generische Funktion anstatt als generische Methode
+
+Wenn wir die Pipeline nicht mehr als Receiver verwendet, sondern als Argumentübergibt, kann man A sowie auch B in der Parameterliste der Funktion deklarieren. Beachte dass neue Typparameter nur bei Methoden nicht zulässig sind! Da Pipeline nicht mehr der Receiver ist, gibt es auch keine Methode mehr, sondern "nur noch" eine Funktion und ist damit zulässig. 
+
+```Go
+func Map[A, B any](p  Pipeline[A], fn func(A) B) Pipeline[U] {
+    out := make([]B, len(p.items))
+    for i, v := range p.items {
+        out[i] = fn(v)
+    }
+    return Pipeline[B]{out}
+}
+```
+Diese Funktion ermöglicht es uns einen beliebigen Type A zu einem beliebigen Type B umzuwandeln und dabei auch für Typsicherheit garantieren. Leider geht dadurch aber auch die Möglichkeit der Verkettung verloren. Vorher konnten wir die Pipeline im Methodenaufruf elegant von links nach rechts darstellen, jetzt muss entweder jeder Transformationsschritt einzeln durchgeführt werden oder wenn man versucht die Aufrufe zu verschachteln muss man den Aufruf von innen nach außen lesen.
+
+```Go
+// Jeder Schritt einzeln ausführen
+names  := Map(pipeline, fnUserToString)
+base65Names  := Map(names, fnEncodeBase64)
+
+// Verkettung, aber! Von innen nach außen
+result := Map(Map(pipeline, fnUserToString), fnEncodeBase64)
+```
+
+> [!TIP]
+> - Typsicherheit garantiert
+> - Funktion erfüllt: Type A in Type B überführen
+> - Kein zusätzlicher Boilerplate-Code nötig
+
+> [!WARNING]
+> - Erlaubt keine Verkettung
+> - Verschachtelte Aufrufe sind von innnen nach außen
+
+### 2) Methode ohne Typeparameter
+
+Eine andere Möglichkeit ist 
