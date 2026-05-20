@@ -90,4 +90,34 @@ In diesem Beispiel erfüllt der Type t (Temperatur) das Interface p (printable),
 
 ## Compiler-Limitierung: Go unterstützt keine generische Methoden
 
-Seit der Einführung von Generics in Go 1.18 gibt es bei Generics eine große Einschränkung, zwar können Generics zur Definition von Structs, Funktionen und Interfaces verwendet werden aber nicht für Methoden. Das führt dazu, dass aus anderen Sprachen bekannte Programmiermuster nicht einfach wiederverwendet werden können und man sich anderen Konzepten bedienen muss. Warum das überhaupt ein Problem für manche Entwickler darstellt
+Seit der Einführung von Generics in Go 1.18 besteht eine zentrale Einschränkung: Generics können zwar für Structs, Funktionen und Interfaces verwendet werden, nicht aber für Methoden. Das hat zur Folge, dass bekannte Implementierungsmuster aus anderen Sprachen nicht einfach übernommen werden können und man stattdessen auf andere Konzepte ausweichen muss. In dieser Arbeit wird untersucht, welche konkreten Auswirkungen das hat, welche Alternativen es gibt und was diese Workarounds jeweils mit sich bringen. Als Einstieg betrachten wir zunächst ein typisches Problem, an dem sich die Einschränkung besonders deutlich zeigt.
+
+### Generic Transformation Pipeline
+
+Oft ist es notwendig, Daten zu transformieren. Beispielsweise an API-Übergängen oder beim Wechsel in eine andere Schicht einer Anwendung. Schreibt man für jeden solchen Übergang eine eigene Konvertierungsroutine, entsteht schnell redundanter, schwer wartbarer Code, der bei Änderungen an einem Datenmodell an vielen Stellen gleichzeitig angepasst werden muss. Um diesem Problem entgegezuwirken, bietet sich das Konzept einer Transformationspipeline an. Dabei wird eine Mapping-Funktion definiert, die Daten eines Eingangstyps aufnimmt und in einen Zieltyp überführt. Einzelne solcher Schritte lassen sich zu einer Pipeline zusammensetzen, sodass der Output eines Schritts direkt als Input des nächsten dient. Daten vom Typ A werden eingespeist, durchlaufen mehrere Transformationsschritte und kommen schließlich als Typ B heraus.
+Der eigentliche Mehrwert dieses Ansatzes liegt in der Komposierbarkeit. Jeder Transformationsschritt ist eine eigenständige, wiederverwendbare Einheit, die unabhängig entwickelt und getestet werden kann. Die Pipeline selbst kennt keine konkrete Transformationslogik, sie orchestriert lediglich den Datenfluss. Dadurch lassen sich neue Übergänge durch Kombination bestehender Schritte abbilden, ohne jedes Mal neuen Konvertierungscode schreiben zu müssen.
+
+![Logo](https://i.imgur.com/0NhXu92.png)
+
+Zuerst müssen wir einen Type `Pipeline` definieren, welches die Daten hält. In den eckigen Klammern wird ein generischer Typparameter für das Strukt vorgestellt. `[A any]` bedeutet: Der Type A wird bei der Instanziierung gewählt. `Any` bedeutet, dass A jeden möglichen Type annehmen kann.
+
+```Go
+type Pipeline[A any] struct{
+  items []A
+}
+```
+
+Wir möchten jetzt versuchen einen User, wie oben vorgestellt, in einen String zu transformieren. Also soll aus einem User ein String werden, der den Namen des Users beinhaltet. Dazu bereiten wir zwei User vor und laden sie in die Pipeline.
+
+```Go
+type User struct{
+  Name string
+  Email string
+  Accountnummer int
+}
+
+user1:= User{"Max Mustermann", "maxmuster@mann.de", 1}
+user2:= User{"Erika Mustermann", "erikamuster@mann.de", 2}
+
+pipeline := Pipeline[User]{items: []User{user1, user2}}
+```
