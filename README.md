@@ -14,7 +14,7 @@ Dazu wird zunächst der konzeptuelle Unterschied zwischen Funktionen und Methode
 Um den vollen Umfang der Limitierung des Nutzens von Generics in Go zu verstehen, werden wir uns zuerst grundlegende Bestandteile von Go genauer angucken und verstehen
 
 ### Structs
-Ein Struct ist eine Datenstruktur um eine Sammlung von zusammengehöriger Daten zu bündeln. Ein Struct besteht aus benannten Feldern mit einem explizieten Datentyp. Hat man schon einmal eine objekt-orientierte Programmiersprache wie Java/C++ verwendet, kann man sich ein Struct als Klasse ohne Vererbung vorstellen. 
+Ein Struct in Go ist ein bennanter Typ um eine Sammlung von zusammengehöriger Daten zu bündeln. Ein Struct besteht aus benannten Feldern mit einem explizieten Datentyp. Hat man schon einmal eine objekt-orientierte Programmiersprache wie Java/C++ verwendet, kann man sich ein Struct als Klasse ohne Vererbung vorstellen. 
 
 ```go
 type User struct{
@@ -66,3 +66,28 @@ user1.werBinIch()
 --> Mein Name ist Max Mustermann
 ```
 
+### Interfaces
+
+In Go ist ein Interface ein Typ, der eine Menge an Methodensignaturen definiert. Das Interface beschreibt welche Methoden ein bestimmter Typ haben muss ohne die Implementierung vorzugeben.
+Anders als in anderen Sprachen wie Java wird ein Interface nicht mit `implements` implementiert, sondern erfolglt impliziet. Sobald ein Type alle Methoden implementiert dessen Methodensignaturen im Interface enthalten sind, erfüllt dieser das Interface. 
+
+```Go
+type printable interface{
+  func printOut()
+}
+
+type Temperatrur struct{
+  value float64
+  unit string
+}
+
+func (t Temperatur) printOut(){
+  println(t.value + "°" + t.unit)
+}
+```
+
+In diesem Beispiel erfüllt der Type t (Temperatur) das Interface p (printable), weil t an alle in p definierten Methoden gebunden ist und sie implementiert. Das wäre in diesem Beispiel die Methode `printOut`. Da t das Interface p erfüllt wird t zu einem Sub-Type von p. Fortlaufent verwenden wir die folgende Notation dafür: `t <= p`. Das bedeutet dass immer wenn der Type p erwartet wird auch t gültig ist.
+
+## Compiler-Limitierung: Go unterstützt keine generische Methoden
+
+Seit der Einführung von Generics in Go 1.18 gibt es bei Generics eine große Einschränkung, zwar können Generics zur Definition von Structs, Funktionen und Interfaces verwendet werden aber nicht für Methoden. Das führt dazu, dass aus anderen Sprachen bekannte Programmiermuster nicht einfach wiederverwendet werden können und man sich anderen Konzepten bedienen muss. Warum das überhaupt ein Problem für manche Entwickler darstellt
