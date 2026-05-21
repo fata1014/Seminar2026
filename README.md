@@ -251,3 +251,6 @@ result := mapped.Filter(func(name string) bool { return name != "" })
 > [!WARNING]
 > - Neuer Type für jeden Mapping-Schritt
 > - Kann extremen Aufwand verursachen
+
+https://go.dev/play/p/0sY0fsvwbtm
+https://go.dev/play/p/eJIA50qo7Cr
