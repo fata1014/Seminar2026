@@ -37,14 +37,16 @@ Zugriff auf die Felder eines Structs werden mit dem Punktopertor `.` durchgefüh
 var user1_Name string = user1.Name
 ```
 
-### Methoden
+### Funktionen und Methoden
 
 Methoden in Go sind ganz normale Funktionen mit:
 `Methodenname`,
 `Parameterliste` und 
 `Rückgabewert`.
 
-Der entscheidende Unterschied zu normalen Funktionen ist der sogenannte Receiver. Der `Receiver` ist ein zusätzlicher Parameter vor dem Methodennamen, der angibt an welchen Typ die Methode gebunden wird. Wer die Klassen-Analogie von vorhin im Kopf hat, wird bemerkt haben dass im Struct die Methodendefinitionen fehlen. Das ist kein Zufall! In Go werden Methoden bewusst außerhalb des Structs definiert und erst durch den Receiver an einen Typ gebunden.
+Der wesentliche Unterschied zwischen einer Funktion und einer Methode in Go ist der sogenannte Receiver. Dabei handelt es sich um einen zusätzlichen Parameter, der vor dem Methodennamen angegeben wird und festlegt, an welchen Typ die Methode gebunden ist. Während normale Funktionen unabhängig von einem Typ definiert werden, sind Methoden immer einem bestimmten Typ zugeordnet. In Go werden Methoden nicht innerhalb einer Struct-Definition geschrieben, sondern separat definiert und über den Receiver mit einem Typ verknüpft. Durch diese Bindung erhält der Typ zusätzliches Verhalten. Erst der Receiver macht aus einer Funktion eine Methode und ermöglicht die Verwendung der Methodensyntax, beispielsweise `person.SayName()` statt `SayName(person)`.
+
+Structs beschreiben in Go lediglich die Datenstruktur eines Typs. Das zugehörige Verhalten wird durch Methoden bereitgestellt, die über Receiver an den Typ gebunden werden. Zusammen bilden Daten und Verhalten eine ähnliche Struktur wie Klassen in objektorientierten Sprachen, jedoch ohne ein klassisches Klassenkonzept, wie Kapselung und Vererbung.
 
 ```go
 //Normale Funktion
