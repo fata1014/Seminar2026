@@ -14,37 +14,37 @@ Dazu wird zunächst der konzeptuelle Unterschied zwischen Funktionen und Methode
 Um den vollen Umfang der Limitierung des Nutzens von Generics in Go zu verstehen, werden wir uns zuerst grundlegende Bestandteile von Go genauer angucken und verstehen
 
 ### Structs
-Ein Struct in Go ist ein bennanter Typ um eine Sammlung von zusammengehöriger Daten zu bündeln. Ein Struct besteht aus benannten Feldern mit einem explizieten Datentyp. Hat man schon einmal eine objekt-orientierte Programmiersprache wie Java/C++ verwendet, kann man sich ein Struct als Klasse ohne Vererbung vorstellen. 
+Ein Struct in Go ist ein benannter Typ, der eine Sammlung zusammengehöriger Daten bündelt. Ein Struct besteht aus benannten Feldern mit jeweils einem expliziten Datentyp. Wer bereits eine objektorientierte Programmiersprache wie Java oder C++ verwendet hat, kann sich ein Struct näherungsweise als Klasse ohne Vererbung und ohne klassische Kapselung vorstellen
 
 ```go
-type User struct{
-  Name string
-  Email string
-  Accountnummer int
+type User struct {
+    Name          string
+    Email         string
+    Accountnummer int
 }
 ```
 
-Structs werden dann wie folgt entweder in Reihenfolge oder mit Feldreferenz iniziiert:
+Structs werden entweder positionsbasiert, in der Reihenfolge der Felddefinition, oder über Feldreferenzen initialisiert:
 
 ```go
 var user1 User = User{"Max Mustermann", "maxmuster@mann.de", 1}
 var user2 User = User{Name: "Erika Mustermann", Email: "erikamuster@mann.de", Accountnummer: 2}
 ```
 
-Zugriff auf die Felder eines Structs werden mit dem Punktopertor `.` durchgeführt:
+Der Zugriff auf die Felder eines Structs erfolgt mit dem Punktoperator `.` durchgeführt:
 
 ```go
-var user1_Name string = user1.Name
+var user1Name string = user1.Name
 ```
 
 ### Funktionen und Methoden
 
-Methoden in Go sind ganz normale Funktionen mit:
+Methoden in Go sind Funktionen, bestehend aus
 `Methodenname`,
 `Parameterliste` und 
 `Rückgabewert`.
 
-Der wesentliche Unterschied zwischen einer Funktion und einer Methode in Go ist der sogenannte Receiver. Dabei handelt es sich um einen zusätzlichen Parameter, der vor dem Methodennamen angegeben wird und festlegt, an welchen Typ die Methode gebunden ist. Während normale Funktionen unabhängig von einem Typ definiert werden, sind Methoden immer einem bestimmten Typ zugeordnet. In Go werden Methoden nicht innerhalb einer Struct-Definition geschrieben, sondern separat definiert und über den Receiver mit einem Typ verknüpft. Durch diese Bindung erhält der Typ zusätzliches Verhalten. Erst der Receiver macht aus einer Funktion eine Methode und ermöglicht die Verwendung der Methodensyntax, beispielsweise `person.SayName()` statt `SayName(person)`.
+Der wesentliche Unterschied zwischen einer Funktion und einer Methode ist der sogenannte Receiver: ein zusätzlicher Parameter, der vor dem Methodennamen angegeben wird und festlegt, an welchen Typ die Methode gebunden ist. Während normale Funktionen unabhängig von einem Typ definiert werden, sind Methoden stets einem bestimmten Typ zugeordnet. Anders als bei Klassen in objektorientierten Sprachen werden Methoden in Go nicht innerhalb der Typ-Definition geschrieben, sondern separat und über den Receiver mit dem Typ verknüpft. Erst der Receiver macht aus einer Funktion eine Methode und ermöglicht die Methodensyntax, etwa `person.werBinIch()` statt `werBinIch(person)`.
 
 Structs beschreiben in Go lediglich die Datenstruktur eines Typs. Das zugehörige Verhalten wird durch Methoden bereitgestellt, die über Receiver an den Typ gebunden werden. Zusammen bilden Daten und Verhalten eine ähnliche Struktur wie Klassen in objektorientierten Sprachen, jedoch ohne ein klassisches Klassenkonzept, wie Kapselung und Vererbung.
 
@@ -67,27 +67,36 @@ func (u User) werBinIch() string{
 user1.werBinIch()
 --> Mein Name ist Max Mustermann
 ```
+Dabei wird zwischen zwei Receiver-Arten unterschieden: dem Value-Receiver `(u User)`, der mit einer Kopie des Wertes arbeitet, und dem Pointer-Receiver `(u *User)`, der eine Referenz auf den ursprünglichen Wert erhält und diesen daher auch verändern kann:
+```Go
+// Pointer-Receiver: ändert das Original
+func (u *User) AendereName(neuerName string) {
+    u.Name = neuerName
+}
+
+user1.AendereName("Max Mustermann II")
+// user1.Name ist jetzt dauerhaft verändert
+```
+Structs beschreiben in Go also lediglich die Datenstruktur eines Typs, während Methoden das zugehörige Verhalten bereitstellen. Zusammen ergeben Daten und Verhalten eine Struktur, die an Klassen in objektorientierten Sprachen erinnert – jedoch ohne klassisches Klassenkonzept wie Vererbung oder Kapselung.
 
 ### Interfaces
 
-In Go ist ein Interface ein Typ, der eine Menge an Methodensignaturen definiert. Das Interface beschreibt welche Methoden ein bestimmter Typ haben muss ohne die Implementierung vorzugeben.
-Anders als in anderen Sprachen wie Java wird ein Interface nicht mit `implements` implementiert, sondern erfolglt impliziet. Sobald ein Type alle Methoden implementiert dessen Methodensignaturen im Interface enthalten sind, erfüllt dieser das Interface. 
+Ein Interface in Go ist ein Typ, der eine Menge von Methodensignaturen definiert. Es beschreibt, welche Methoden ein Typ besitzen muss, ohne deren Implementierung vorzugeben. Anders als in Sprachen wie Java, wo ein Interface explizit mit implements umgesetzt wird, erfüllt ein Typ in Go ein Interface implizit: Sobald ein Typ alle im Interface definierten Methoden mit passender Signatur implementiert, erfüllt er dieses Interface automatisch – ohne dass dies irgendwo explizit deklariert werden muss. Dieses Konzept wird als strukturelle Typisierung (structural typing, umgangssprachlich auch "duck typing") bezeichnet.
 
 ```Go
-type printable interface{
-  func printOut()
+type printable interface {
+    printOut()
 }
 
-type Temperatrur struct{
-  value float64
-  unit string
+type Temperatur struct {
+    value float64
+    unit  string
 }
 
-func (t Temperatur) printOut(){
-  println(t.value + "°" + t.unit)
+func (t Temperatur) printOut() {
+    fmt.Printf("%.1f°%s\n", t.value, t.unit)
 }
 ```
-
 In diesem Beispiel erfüllt der Type t (Temperatur) das Interface p (printable), weil t an alle in p definierten Methoden gebunden ist und sie implementiert. Das wäre in diesem Beispiel die Methode `printOut`. Da t das Interface p erfüllt wird t zu einem Sub-Type von p. Fortlaufent verwenden wir die folgende Notation dafür: `t <= p`. Das bedeutet dass immer wenn der Type p erwartet wird auch t gültig ist.
 
 ## Compiler-Limitierung: Go unterstützt keine generische Methoden
