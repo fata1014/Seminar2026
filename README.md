@@ -217,6 +217,55 @@ Man kann die zulässigen Typen beschränken indem man sie auflistet und mit dem 
 ### Generische Funktionen
 Jetzt können wir Typparamter und Constraints nutzen um eine generische Funktion zu schreiben, welche für mehrere Typen funktionieren und gleichzeitig typsicher bleibt. 
 
+```Go
+type Nummer interface {
+	int | int8 | int16 | int32 | int64 | uint | uint8 | uint16 | uint32 | uint64 | float32 | float64 
+}
+
+func summe[T Nummer](werte []T) T {
+	var ergebnis T
+	for _, z := range werte {
+		ergebnis += z
+	}
+	return ergebnis
+}
+```
+
+Der Typparameter T ist nun als `Nummer` festgelegt. Dadurch erwartet die Funktion als Eingabeparameter num ein Slice des Typs Nummer und gibt auch ein Wert des Typs Nummer zurück. Das macht die Funktion typsicher, da durch den Constraint nur Slices die das Nummer Interface implementieren als Eingabeparameter gesetzt werden können. Das Schließt die Verwendung der Funktion mit allen nicht numerischen Werten aus. 
+
+### Möglichkeit 3: Generische Funktion
+```Go
+package main
+
+import "fmt"
+
+type Nummer interface {
+	int | int8 | int16 | int32 | int64 |
+		uint | uint8 | uint16 | uint32 | uint64 |
+		float32 | float64
+}
+
+func summe[T Nummer](werte []T) T {
+	var ergebnis T
+	for _, v := range werte {
+		ergebnis += v
+	}
+	return ergebnis
+}
+
+func main() {
+	integers := []int{1, 2, 3, 4, 5}
+	fmt.Println(summe(integers))
+
+	floats64 := []float64{1.0, 2.0, 3.0, 4.0, 5.0}
+	fmt.Println(summe(floats64))
+
+	floats32 := []float32{1.0, 2.0, 3.0, 4.0, 5.0}
+	fmt.Println(summe(floats32))
+}
+```
+
+https://go.dev/play/p/n1XM-vqWhWQ
 
 ## Compiler-Limitierung: Go unterstützt keine generische Methoden
 
