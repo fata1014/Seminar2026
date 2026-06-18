@@ -191,6 +191,33 @@ Der switch `(switch v := z.(type))` prüft zur Laufzeit, welchen konkreten Typ j
 > - Verhalten bei nicht gewolten Typen hängt von default ab -> Laufzeitpanic möglich
 > - Bei Erweiterungen: Neuer Typ -> Neuer Case
 
+## Bausteine von Generics in Go
+Dieses Beispiel lässt sich eleganter mit Generics lösen. Dafür gucken wir uns zuerst die vier wichtigsten Bausteine an um Generics in Go zu verstehen und verwenden zu können.
+
+### Typparameter
+Typparameter sind Platzhalter für konkrete Typen, die erst beim Aufruf einer Funktion oder bei der Instanziierung eines Typs festgelegt werden. Sie werden in eckigen Klammern direkt nach dem Funktions- oder Typnamen deklariert.
+
+```Go
+func Print[T any](wert T) {
+    fmt.Println(wert)
+}
+```
+`T` ist hier der Typparameter und `any` der Constraint für T (Mehr dazu im nächsten Abschnitt). Beim Aufruf dieser Funktion beispielsweise mit `Print(42)` wird T als Integer festgelegt. Durch den Contraint `any` ist die Funktion Print mit jedem beliebigen Typen möglich. Es ist auch möglich den Typ beim Aufruf expliziet anzugeben: `Print[int](42)`
+
+### Constraints
+Ein Contraint legt fest, welche konkreten Typen für ein Typparamter zulässig sind und dadurch auch welche Operationen und Methoden auf Werte dieses Typs ausgeführt werden dürfen. In Go sind solche Constraints nichts weiter als ein Interface. Will man die Typen beschränken sieht das Interface wie folgt aus:
+
+```Go
+type Nummer interface {
+	int | int8 | int16 | int32 | int64 | uint | uint8 | uint16 | uint32 | uint64 | float32 | float64 
+}
+```
+Man kann die zulässigen Typen beschränken indem man sie auflistet und mit dem Pipe-Symbol `|` trennt. Zusätzlich lassen sich Constraints auch zusätzlich noch mit Methoden bilden. Dann müssen die Typen zusätzlich auch noch die gelisteten Methoden implementieren um das Constraint-Interface zu erfüllen. 
+
+### Generische Funktionen
+Jetzt können wir Typparamter und Constraints nutzen um eine generische Funktion zu schreiben, welche für mehrere Typen funktionieren und gleichzeitig typsicher bleibt. 
+
+
 ## Compiler-Limitierung: Go unterstützt keine generische Methoden
 
 Seit der Einführung von Generics in Go 1.18 besteht eine zentrale Einschränkung: Generics können zwar für Structs, Funktionen und Interfaces verwendet werden, nicht aber für Methoden. Das hat zur Folge, dass bekannte Implementierungsmuster aus anderen Sprachen nicht einfach übernommen werden können und man stattdessen auf andere Konzepte ausweichen muss. In dieser Arbeit wird untersucht, welche konkreten Auswirkungen das hat, welche Alternativen es gibt und was diese Workarounds jeweils mit sich bringen. Als Einstieg betrachten wir zunächst ein typisches Problem, an dem sich die Einschränkung besonders deutlich zeigt.
