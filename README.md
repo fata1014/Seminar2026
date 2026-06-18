@@ -99,6 +99,98 @@ func (t Temperatur) printOut() {
 ```
 In diesem Beispiel erfüllt der Type t (Temperatur) das Interface p (printable), weil t an alle in p definierten Methoden gebunden ist und sie implementiert. Das wäre in diesem Beispiel die Methode `printOut`. Da t das Interface p erfüllt wird t zu einem Sub-Type von p. Fortlaufent verwenden wir die folgende Notation dafür: `t <= p`. Das bedeutet dass immer wenn der Type p erwartet wird auch t gültig ist.
 
+## Generic Go
+
+Durch Generics lässt sich oft redundanter Code vermeiden. Sie bieten elegantere Möglichkeiten, wiederverwendbaren, besser lesbaren und wartbaren Code zu schreiben. Oft wird die selbe Funktionalität für viele unterschiedliche Typen benötigt. Anstatt für jeden Typ eine eigene Funktion zu schreiben, helfen Generics dabei, gleiche Funktionalität für verschiedene Typen bereitzustellen. In Go wurden Generics erst mit Version 1.18 im Jahr 2022 eingeführt und ermöglichen es seitdem, Funktionen und Datenstrukturen typsicher zu schreiben, ohne dabei auf den unspezifischen `any-Typ` zurückgreifen zu müssen. Dieser wird nachfolgend noch genauer erklärt.
+
+Zuerst schauen wir uns die Möglichkeiten vor Go 1.18, also ohne Generics, anhand eines einfachen Beispiels an:
+
+```Go
+integers := []int{1, 2, 3, 4, 5}
+floats32 := []float32{1.0, 2.0, 3.0, 4.0, 5.0}
+floats64 := []float64{1.0, 2.0, 3.0, 4.0, 5.0}
+```
+Wir haben drei Slices, einmal gefüllt mit Integerwerten und zweimal mit Floatwerten. Es soll jeweils die Summe aller Elemente eines Slices ermittelt werden. 
+
+### Möglichkeit 1: Für jeden Datentyp eine eigene Funktion
+```Go
+func summeInt(werte []int) int {
+	var result int = 0
+	for _, v := range werte {
+		result += v
+	}
+
+	return result
+}
+
+func summeFloat32(werte []float32) float32 {
+	var result float32 = 0
+	for _, v := range werte {
+		result += v
+	}
+
+	return result
+}
+
+func summeFloat64(werte []float64) float64 {
+	var result float64 = 0
+	for _, v := range werte {
+		result += v
+	}
+
+	return result
+}
+
+func main() {
+
+	integers := []int{1, 2, 3, 4, 5}
+	floats32 := []float32{1.0, 2.0, 3.0, 4.0, 5.0}
+	floats64 := []float64{1.0, 2.0, 3.0, 4.0, 5.0}
+
+	fmt.Println("Integer: ", summeInt(integers))
+	fmt.Println("Float32: ", summeFloat32(floats32))
+	fmt.Println("Float64: ", summeFloat64(floats64))
+}
+```
+> [!TIP]
+> - Typsicherheit garantiert
+
+> [!WARNING]
+> - Viel redundanter Code
+> - Bei Erweiterungen: Neuer Typ -> Neue Methode
+
+### Möglichkeit 2: Any / Interface{} verwenden und beim summieren zu float64 casten
+```Go
+func summe(zahlen []any) float64 {
+	var result float64 
+	for _, z := range zahlen {
+		switch v := z.(type) {
+		case int:
+			ergebnis += float64(v)
+		case int64:
+			ergebnis += float64(v)
+		case float32:
+			ergebnis += float64(v)
+		case float64:
+			ergebnis += v
+		default:
+			fmt.Printf("Unbekannter Typ übersprungen: %T\n", v)
+		}
+	}
+	return ergebnis
+}
+```
+Die Funktion gibt grundsätzlich float64 zurück, da das der einzige Weg ist, sowohl Ganzzahlen als auch Fließkommazahlen verlustfrei in einem gemeinsamen Rückgabetyp zu summieren.
+Der switch `(switch v := z.(type))` prüft zur Laufzeit, welchen konkreten Typ jedes Element hat, und behandelt es entsprechend und castet falls nötig das Element zu float64. Das default-Case fängt unbekannte oder unerwünschte Typen ab, damit das Programm nicht abstürzt, falls beispielsweise ein String im Slice landet.
+
+> [!TIP]
+> - Weniger redundanter Code
+> - Weniger Aufwand bei Erweiterungen um neuen Typen
+
+> [!WARNING]
+> - Verhalten bei nicht gewolten Typen hängt von default ab -> Laufzeitpanic möglich
+> - Bei Erweiterungen: Neuer Typ -> Neuer Case
+
 ## Compiler-Limitierung: Go unterstützt keine generische Methoden
 
 Seit der Einführung von Generics in Go 1.18 besteht eine zentrale Einschränkung: Generics können zwar für Structs, Funktionen und Interfaces verwendet werden, nicht aber für Methoden. Das hat zur Folge, dass bekannte Implementierungsmuster aus anderen Sprachen nicht einfach übernommen werden können und man stattdessen auf andere Konzepte ausweichen muss. In dieser Arbeit wird untersucht, welche konkreten Auswirkungen das hat, welche Alternativen es gibt und was diese Workarounds jeweils mit sich bringen. Als Einstieg betrachten wir zunächst ein typisches Problem, an dem sich die Einschränkung besonders deutlich zeigt.
